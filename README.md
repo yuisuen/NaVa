@@ -1,8 +1,8 @@
 # NaVa: Natural and Valid Perturbation
 
-![Python](https://img.shields.io/badge/Python-3.10-blue) ![PyTorch](https://img.shields.io/badge/PyTorch-2.5.1-ee4c2c) ![License](https://img.shields.io/badge/License-MIT-green) [![Weights](https://img.shields.io/badge/%F0%9F%A4%97%20Weights-NaVa--UCR--10pct-yellow)](https://huggingface.co/isyuisuen/NaVa-UCR-10pct)
+[![Project Page](https://img.shields.io/badge/Project-Page-2a78d6)](https://yuisuen.github.io/NaVa/) ![Python](https://img.shields.io/badge/Python-3.10-blue) ![PyTorch](https://img.shields.io/badge/PyTorch-2.5.1-ee4c2c) ![License](https://img.shields.io/badge/License-MIT-green) [![Weights](https://img.shields.io/badge/%F0%9F%A4%97%20Weights-NaVa--UCR--10pct-yellow)](https://huggingface.co/isyuisuen/NaVa-UCR-10pct)
 
-Code for *NaVa: Constructing Natural and Valid Perturbation Feasible Sets for Semi-Supervised Time Series Classification*.
+Code for *NaVa: Constructing Natural and Valid Perturbation Feasible Sets for Semi-Supervised Time Series Classification*. Project page: <https://yuisuen.github.io/NaVa/>
 
 Rui Sun<sup>1</sup>, Yujia Chen<sup>2</sup>, Huayu Mai<sup>2</sup>, Yu Liu<sup>3,†</sup>, Tianzhu Zhang<sup>2</sup>, Yongdong Zhang<sup>2</sup>, Feng Wu<sup>2</sup>, You He<sup>3</sup>
 
