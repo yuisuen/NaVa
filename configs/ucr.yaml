@@ -1,0 +1,23 @@
+# 106 UCR datasets, 10% / 20% / 40% labeled series, FCN backbone.
+benchmark: ucr
+data_root: data/ucr                 # written by: python scripts/make_splits.py --benchmark ucr ...
+datasets: datasets/ucr106.txt
+ratios: [0.1, 0.2, 0.4]
+folds: 5
+backbone: fcn
+
+nava:
+  k: 100                            # neighbours for the local variations
+  M: 5                              # at most min{M, K-1} class boundaries per series
+  m0: 1.0e-3                        # margin floor
+  xi: 1.0e-6                        # power-iteration probe
+
+training:
+  epochs: 1000
+  steps_per_epoch: 100
+  batch_size: 64                    # labeled series per step
+  unlabeled_batch_size: 256         # series per step for the consistency term
+  lr: 1.0e-3
+  eval_every: 50                    # steps between validation / test evaluations
+  patience: 100                     # epochs without a better validation accuracy
+  seed: 42

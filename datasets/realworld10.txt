@@ -1,0 +1,10 @@
+ElectricDevices
+FordA
+FordB
+PhalangesOutlinesCorrect
+ProximalPhalanxOutlineCorrect
+StarLightCurves
+Wafer
+HAR
+Epilepsy
+sleepEDF

@@ -1,0 +1,5 @@
+torch>=2.0
+numpy
+scikit-learn
+pyyaml
+huggingface_hub    # scripts/evaluate.py, to download the released weights

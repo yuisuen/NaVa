@@ -1,0 +1,23 @@
+# 5 UEA datasets, 10% labeled series, CA-TCC encoder.
+benchmark: uea
+data_root: data/uea                 # written by: python scripts/make_splits.py --benchmark uea ...
+datasets: datasets/uea5.txt
+ratios: [0.1]
+folds: 5
+backbone: catcc
+
+nava:
+  k: 100
+  M: 5
+  m0: 1.0e-3
+  xi: 1.0e-6
+
+training:
+  epochs: 1000
+  steps_per_epoch: 100
+  batch_size: 64
+  unlabeled_batch_size: 256
+  lr: 1.0e-3
+  eval_every: 50
+  patience: 100
+  seed: 42

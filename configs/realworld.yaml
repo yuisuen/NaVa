@@ -1,0 +1,23 @@
+# 10 real-world datasets, 1% / 5% labeled series, FCN backbone.
+benchmark: realworld
+data_root: data/realworld           # written by: python scripts/make_splits.py --benchmark realworld ...
+datasets: datasets/realworld10.txt
+ratios: [0.01, 0.05]
+folds: 5
+backbone: fcn
+
+nava:
+  k: 100
+  M: 5
+  m0: 1.0e-3
+  xi: 1.0e-6
+
+training:
+  epochs: 1000
+  steps_per_epoch: 100
+  batch_size: 64
+  unlabeled_batch_size: 256
+  lr: 1.0e-3
+  eval_every: 50
+  patience: 100
+  seed: 42
