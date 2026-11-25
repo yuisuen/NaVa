@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NaVa: Constructing Natural and Valid Perturbation Feasible Sets for Semi-Supervised Time Series Classification</title>
+<meta name="description" content="NaVa constructs, for every series, the maximum-volume perturbation feasible set that is natural and valid, in closed form, for semi-supervised time series classification.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="NaVa: Constructing Natural and Valid Perturbation Feasible Sets for Semi-Supervised Time Series Classification">
+<meta property="og:description" content="For every series, the maximum-volume perturbation feasible set that is natural and valid, in closed form.">
+<meta property="og:url" content="https://yuisuen.github.io/NaVa/">
+<meta property="og:image" content="https://yuisuen.github.io/NaVa/static/preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+<main>
+
+<header>
+  <h1 class="title">NaVa: Constructing Natural and Valid Perturbation Feasible Sets for <span class="nowrap">Semi-Supervised</span> Time Series Classification</h1>
+  <p class="authors">
+    <span>Rui Sun<sup>1</sup></span>
+    <span>Yujia Chen<sup>2</sup></span>
+    <span>Huayu Mai<sup>2</sup></span>
+    <span>Yu Liu<sup>3,&dagger;</sup></span>
+    <span>Tianzhu Zhang<sup>2</sup></span>
+    <span>Yongdong Zhang<sup>2</sup></span>
+    <span>Feng Wu<sup>2</sup></span>
+    <span>You He<sup>3</sup></span>
+  </p>
+  <p class="affil">
+    <sup>1</sup>Shenzhen International Graduate School, Tsinghua University<br>
+    <sup>2</sup>School of Information Science and Technology, University of Science and Technology of China<br>
+    <sup>3</sup>Department of Electronic Engineering, Tsinghua University<br>
+    <sup>&dagger;</sup>Corresponding author
+  </p>
+  <nav class="links">
+    <a href="https://github.com/yuisuen/NaVa">Code</a>
+    <a href="https://huggingface.co/isyuisuen/NaVa-UCR-10pct">Weights</a>
+  </nav>
+  <nav class="toc">
+    <a href="#abstract">Abstract</a> &middot;
+    <a href="#feasible-sets">Feasible sets</a> &middot;
+    <a href="#method">Method</a> &middot;
+    <a href="#results">Results</a> &middot;
+    <a href="#visualization">Visualization</a> &middot;
+    <a href="#code">Code</a>
+  </nav>
+</header>
+
+<figure class="teaser wide">
+  <picture>
+    <source srcset="static/nava_feasible_set.webp" type="image/webp">
+    <img src="static/nava_feasible_set.gif" width="1150" height="560"
+         alt="Animation: how NaVa constructs the perturbation feasible set of a series">
+  </picture>
+  <figcaption>
+    <b>How NaVa constructs the perturbation feasible set of a series <span class="m">x<sub>i</sub></span>.</b>
+    (a) The ball of VAT has a fixed radius and crosses the class boundary.
+    (b) The naturalness constraint extends along the local variations of real series.
+    (c) The validity constraint is derived from the class margins of the current model.
+    (d) NaVa takes the maximum-volume ellipsoid within both constraints, in closed form.
+    (e) As training progresses, the feasible set adapts to the moving class boundary.
+    (f) Consistency is enforced on the perturbation within it that maximally changes the prediction.
+    Schematic illustration on 2D toy data; every set is computed with the closed form of NaVa.
+  </figcaption>
+</figure>
+
+<h2 id="abstract">Abstract</h2>
+<p class="abstract">
+  The critical challenge of semi-supervised time series classification lies in how to fully exploit the large volume
+  of unlabeled series to improve generalization. Existing methods, despite their diverse schemes, enforce consistency
+  over a set of perturbations for each series, termed the perturbation feasible set. However, such feasible sets,
+  either composed of hand-crafted augmentations or tethered to fixed priors, may push perturbed views off the real
+  data distribution or across the class boundary. In this paper, we identify two requirements on the feasible set,
+  namely naturalness and validity, which require every perturbed view to be a plausible series and to preserve the
+  class semantics of the original series, respectively. We formally define the construction of the feasible set as a
+  constrained optimization problem, with the two requirements formulated as constraints derived from the local
+  variations of real series and the class margins of the model, respectively. To this end, we propose Natural and
+  Valid Perturbation (NaVa), which maximizes the volume of the ellipsoid subject to both constraints. This problem
+  admits a unique closed-form solution, shrinking the feasible set only along the few axes crossing the class boundary
+  and dynamically adapting as training progresses. Theoretically, NaVa satisfies both requirements while imposing
+  consistency regularization no weaker than uniform shrinkage, whereas VAT and f-VAT, as special cases, either cross
+  the class boundary or have to shrink uniformly. Extensive experiments on univariate, multivariate, and real-world
+  datasets demonstrate that NaVa performs favorably against state-of-the-art methods, is compatible with their schemes,
+  and consistently improves time series foundation models.
+</p>
+
+<h2 id="feasible-sets">Perturbation feasible sets</h2>
+<p>
+  Existing methods enforce consistency over either a few hand-crafted augmentations shared by all series, or a ball
+  tethered to a fixed prior. Neither is aware of where the real series lie or where the class boundary is.
+</p>
+<figure class="wide">
+  <a href="static/fig1.png" target="_blank" rel="noopener"><img src="static/fig1.png" loading="lazy" decoding="async" width="2000" height="579" alt="Perturbation feasible sets of different methods"></a>
+  <figcaption>
+    <b>Figure 1. Perturbation feasible sets of different methods.</b>
+    (a) Hand-crafted perturbations are the same few for all series, pushing some off the data or across the class
+    boundary. (b) The fixed feasible sets of VAT and f-VAT cross the boundary for most series, while shrinking them
+    uniformly leaves a small set for all. (c) The feasible set of NaVa follows the data for each series and stops
+    before the boundary. (d, e) Statistics on ECGFiveDays with 10% labeled series: the class-crossing rate and the
+    elongation ratio, against the range of real data.
+  </figcaption>
+</figure>
+
+<h2 id="method">Method</h2>
+<p>
+  NaVa formulates the construction of the feasible set as a constrained optimization problem: the largest ellipsoid
+  that satisfies a naturalness constraint and a validity constraint.
+</p>
+<figure class="wide">
+  <a href="static/method.png" target="_blank" rel="noopener"><img src="static/method.png" loading="lazy" decoding="async" width="2400" height="651" alt="Overview of NaVa"></a>
+  <figcaption>
+    <b>Figure 2. Overview of NaVa.</b> The naturalness constraint follows the local variations estimated in the PCA
+    subspace; the validity constraint stops the feasible set before the class boundary; the feasible set is the
+    maximum-volume ellipsoid within both; consistency is enforced between the predictions on the series and its
+    worst-case perturbed view.
+  </figcaption>
+</figure>
+<div class="grid wide">
+  <div class="nat">
+    <h3>Naturalness</h3>
+    <p>Principal component analysis on all training series gives a subspace of their principal variation patterns.
+      Within it, the nearest neighbors of each series give its local variations, and the naturalness constraint
+      <span class="m">N<sub>i</sub></span> is an ellipsoid extending along them.</p>
+  </div>
+  <div class="val">
+    <h3>Validity</h3>
+    <p>The gradients of the class margins of the model point toward the class boundary. The validity constraint
+      <span class="m">V<sub>i</sub></span> limits the extent along each of these directions to a fraction
+      <span class="m">&gamma;</span> of the distance to the boundary, and adapts as training progresses.</p>
+  </div>
+  <div class="mv">
+    <h3>Maximum-volume feasible set</h3>
+    <p>NaVa takes the ellipsoid of maximum volume within <span class="m">N<sub>i</sub></span>&thinsp;&cap;&thinsp;<span class="m">V<sub>i</sub></span>.
+      Diagonalizing both constraints simultaneously gives a unique closed form, in which the length along each axis
+      is the smaller of the lengths allowed by naturalness and validity:
+      <span class="eq"><span class="m">a<sub>ij</sub></span> = min{&thinsp;<span class="m">&epsilon;</span>,
+        <span class="m">&gamma;</span>&thinsp;/&thinsp;&radic;<span class="m">&eta;<sub>ij</sub></span>&thinsp;}.</span>
+      The feasible set thus shrinks only along the few axes that cross the class boundary.</p>
+  </div>
+  <div class="cons">
+    <h3>Consistency training</h3>
+    <p>Each perturbation in the ellipsoid is a linear transformation of a vector in the unit ball, so the perturbation
+      that maximally changes the prediction is found by one power iteration, as efficiently as in VAT and without
+      projections. Consistency is enforced between the predictions on the series and on this perturbed view.</p>
+  </div>
+</div>
+
+<h2 id="results">Results</h2>
+<p>
+  NaVa is compared with 13 methods on the same backbone and data splits, and is further built upon three time series
+  foundation models with different pre-training paradigms.
+</p>
+<div class="table-wrap wide">
+<table>
+  <caption><b>Table 1. Average accuracy (%)</b> on 106 univariate UCR datasets, 5 multivariate UEA datasets, and 10
+    real-world datasets, under different ratios of labeled series.</caption>
+  <thead>
+    <tr class="group">
+      <th rowspan="2">Method</th>
+      <th colspan="3" class="span">UCR (106)</th>
+      <th class="span">UEA (5)</th>
+      <th colspan="2" class="span">Real-world (10)</th>
+    </tr>
+    <tr><th>10%</th><th>20%</th><th>40%</th><th>10%</th><th>1%</th><th>5%</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Supervised only</td><td>71.40</td><td>77.07</td><td>79.86</td><td>56.44</td><td>75.16</td><td>81.11</td></tr>
+    <tr class="sep"><td colspan="7">Classic semi-supervised</td></tr>
+    <tr><td>Mean-Teacher</td><td>73.78</td><td>78.29</td><td>81.86</td><td>57.31</td><td>76.27</td><td>82.22</td></tr>
+    <tr><td>FixMatch</td><td>74.12</td><td>78.18</td><td>81.67</td><td>58.46</td><td>77.62</td><td>82.71</td></tr>
+    <tr><td>DivideMix</td><td>73.17</td><td>77.81</td><td>81.37</td><td>58.15</td><td>77.14</td><td>81.72</td></tr>
+    <tr class="sep"><td colspan="7">Time series semi-supervised</td></tr>
+    <tr><td>SemiTime</td><td>73.87</td><td>78.30</td><td>81.97</td><td>57.95</td><td>76.14</td><td>81.78</td></tr>
+    <tr><td>MTL</td><td>75.71</td><td>80.47</td><td>83.60</td><td>57.68</td><td>80.89</td><td>85.15</td></tr>
+    <tr><td>TS-TFC</td><td>76.53</td><td>80.07</td><td>82.92</td><td>58.52</td><td>80.22</td><td>86.40</td></tr>
+    <tr><td>DiffShape</td><td>76.43</td><td>80.37</td><td>83.38</td><td class="na">&ndash;</td><td class="na">&ndash;</td><td class="na">&ndash;</td></tr>
+    <tr><td>CA-TCC</td><td>74.07</td><td>78.63</td><td>82.03</td><td>57.86</td><td>80.11</td><td>82.54</td></tr>
+    <tr><td>CompleMatch</td><td>78.67</td><td>81.98</td><td>84.87</td><td>58.96</td><td>83.12</td><td>86.32</td></tr>
+    <tr class="sep"><td colspan="7">Adversarial perturbation-based</td></tr>
+    <tr><td>VAT</td><td>77.10</td><td>79.86</td><td>82.55</td><td>57.21</td><td>79.79</td><td>82.22</td></tr>
+    <tr><td>tVAT</td><td>77.82</td><td>81.10</td><td>83.39</td><td>58.23</td><td>78.52</td><td>83.03</td></tr>
+    <tr><td>f-VAT</td><td>78.39</td><td>81.54</td><td>84.35</td><td>59.13</td><td>82.03</td><td>85.26</td></tr>
+    <tr class="ours"><td>NaVa</td><td>82.93</td><td>86.03</td><td>88.48</td><td>62.29</td><td>85.62</td><td>89.38</td></tr>
+  </tbody>
+</table>
+<p class="note">Each dataset contributes the mean over 5 folds (5 labeled subsets for HAR, Sleep-EDF and Epilepsy).
+  FCN is the backbone for UCR and the real-world datasets, and the encoder of CA-TCC for UEA. DiffShape is designed
+  for univariate series.</p>
+</div>
+
+<div class="table-wrap wide">
+<table>
+  <caption><b>Table 2. Built upon time series foundation models.</b> Average accuracy (%) on 18 UCR datasets under
+    10% and 20% labeled series; all methods start from the same pre-trained weights.</caption>
+  <thead>
+    <tr class="group">
+      <th rowspan="2">Method</th>
+      <th colspan="2" class="span">Mantis</th>
+      <th colspan="2" class="span">MOMENT</th>
+      <th colspan="2" class="span">Chronos-2</th>
+    </tr>
+    <tr><th>10%</th><th>20%</th><th>10%</th><th>20%</th><th>10%</th><th>20%</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Zero-shot</td><td>75.71</td><td>79.50</td><td>75.32</td><td>78.40</td><td>75.77</td><td>79.21</td></tr>
+    <tr><td>Fine-tuning</td><td>76.19</td><td>81.22</td><td>74.76</td><td>77.95</td><td>76.14</td><td>81.19</td></tr>
+    <tr><td>CompleMatch</td><td>77.06</td><td>81.27</td><td>74.17</td><td>78.58</td><td>76.79</td><td>81.26</td></tr>
+    <tr><td>VAT</td><td>76.97</td><td>81.77</td><td>75.75</td><td>79.28</td><td>76.30</td><td>81.28</td></tr>
+    <tr><td>f-VAT</td><td>77.47</td><td>82.60</td><td>76.71</td><td>80.76</td><td>76.79</td><td>81.79</td></tr>
+    <tr class="ours"><td>NaVa</td><td>80.81</td><td>85.25</td><td>80.19</td><td>83.68</td><td>80.76</td><td>84.59</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="visualization">Visualization</h2>
+<figure class="wide">
+  <a href="static/tsfig.png" target="_blank" rel="noopener"><img src="static/tsfig.png" loading="lazy" decoding="async" width="2000" height="667" alt="Perturbations of different methods on four UCR datasets"></a>
+  <figcaption>
+    <b>Figure 3. Perturbations on four UCR datasets.</b> The hatched band marks the natural variation of the series
+    (from its 20 nearest same-class neighbors), and the gauge on the right shows how far each perturbation moves
+    toward the class boundary. The perturbations of NaVa follow the band and stop before the boundary.
+  </figcaption>
+</figure>
+
+<h2 id="code">Code and weights</h2>
+<p>The code, data splits and per-dataset hyperparameters are on <a href="https://github.com/yuisuen/NaVa">GitHub</a>;
+  the trained FCN classifiers of all 106 UCR datasets (10% labeled series, 5 folds) are on the
+  <a href="https://huggingface.co/isyuisuen/NaVa-UCR-10pct">Hugging Face Hub</a>.</p>
+<pre><code>pip install -r requirements.txt
+python scripts/make_splits.py --benchmark ucr --root /path/to/UCRArchive_2018 --out data/ucr
+python scripts/run.py --config configs/ucr.yaml --dataset GunPoint --ratio 0.1 --fold 0 \
+       --out results/gunpoint_f0.json
+python scripts/evaluate.py --dataset GunPoint     # the released weights, 5 folds</code></pre>
+
+<h2 id="acknowledgements">Acknowledgements</h2>
+<p>We thank the maintainers of the UCR and UEA time series classification archives, and the authors of CA-TCC for
+  releasing the preprocessed HAR, Epilepsy and Sleep-EDF data.</p>
+
+<footer>The code is released under the MIT License.</footer>
+
+</main>
+</body>
+</html>
